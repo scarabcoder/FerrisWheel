@@ -1,0 +1,7 @@
+name: FerrisWheel
+version: 0.1.0
+main: net.clownercraft.ferriswheel.FerrisWheel
+authors: [ScarabCoder, ClownerCraft]
+commands:
+  ferriswheel:
+      aliases: [fw]
