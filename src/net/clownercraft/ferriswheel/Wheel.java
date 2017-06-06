@@ -24,6 +24,9 @@ public class Wheel {
 	private static Location center;
 	private static int cost;
 	private static String axis;
+	private static int cartsAmount;
+	private static FerrisWheelRunnable runnable;
+	private static boolean enabled;
 	
 	private static List<Minecart> carts = new ArrayList<Minecart>();
 	
@@ -36,17 +39,35 @@ public class Wheel {
 			speedModifier = f.getDouble("speedModifier");
 		if(f.contains("center"))
 			center = (Location) f.get("center");
+		if(f.contains("carts"))
+			cartsAmount = f.getInt("carts");
 		if(f.contains("cost"))
 			cost = f.getInt("cost");
+		if(f.contains("enabled"))
+			enabled = f.getBoolean("enabled");
 		if(f.contains("axis"))
 			axis = f.getString("axis");
-		if(!FerrisWheel.containsAll("radius", "speedModifier", "center", "cost", "axis"))
-			System.out.println("[Ferris Wheel] One or more of the following settings have not been set: \nradius, speedModifier, center, cost, axis.");
+		if(!FerrisWheel.containsAll("radius", "speedModifier", "center", "cost", "axis", "carts"))
+			System.out.println("[Ferris Wheel] One or more of the following settings have not been set: \nradius, speedModifier, center, cost, axis, carts.");
+	}
+	
+	public static void start(){
+		if(!FerrisWheel.containsAll("radius", "speedModifier", "center", "cost", "axis", "carts")) return;
+		
+		runnable = new FerrisWheelRunnable();
+		
+		runnable.runTaskTimer(FerrisWheel.getPlugin(), 0, 1);
+		
+
+	}
+	
+	public static void stop(){
+		
 	}
 	
 	public static void startRide(Player p){
 		if(FerrisWheel.containsAll("radius", "speedModifier", "center", "cost", "axis")){
-			if(TokenManager.getInstance().getMoney(p.getUniqueId()) >= Wheel.getTokenCost() || p.hasPermission("ferriswheel.admin")){
+			if(TokenManager.getInstance() != null && TokenManager.getInstance().getMoney(p.getUniqueId()) >= Wheel.getTokenCost() || p.hasPermission("ferriswheel.admin")){
 				if(!p.hasPermission("ferriswheel.admin")){
 					TokenManager.getInstance().setMoney(p.getUniqueId(), TokenManager.getInstance().getMoney(p.getUniqueId()) - Wheel.getTokenCost());
 					p.sendMessage(ChatColor.RED + "-" + Wheel.getTokenCost() + " tokens.");
@@ -118,12 +139,28 @@ public class Wheel {
 		
 	}
 	
+	public static boolean isEnabled(){
+		return enabled;
+	}
+	
+	public static int getCartsAmount(){
+		return cartsAmount;
+	}
+	
 	public static boolean isVehicle(Minecart m){
 		return carts.contains(m);
 	}
 	
 	public static List<Minecart> getCarts(){
 		return carts;
+	}
+	
+	public static void addMinecart(Minecart cart){
+		carts.add(cart);
+	}
+	
+	public static void removeMinecart(Minecart cart){
+		carts.remove(cart);
 	}
 	
 	public static int getRadius(){
@@ -168,11 +205,23 @@ public class Wheel {
 		FerrisWheel.getPlugin().saveConfig();
 		speedModifier = modifier;
 	}
+
+	public static void setEnabled(boolean enabled){
+		FerrisWheel.getPlugin().getConfig().set("enabled", enabled);
+		FerrisWheel.getPlugin().saveConfig();
+		Wheel.enabled = enabled;
+	}
 	
 	public static void setCenter(Location center){
 		FerrisWheel.getPlugin().getConfig().set("center", center);
 		FerrisWheel.getPlugin().saveConfig();
 		Wheel.center = center;
+	}
+	
+	public static void setCarts(int size){
+		FerrisWheel.getPlugin().getConfig().set("carts", size);
+		FerrisWheel.getPlugin().saveConfig();
+		Wheel.cartsAmount = size;
 	}
 	
 	public static void setCost(int cost){

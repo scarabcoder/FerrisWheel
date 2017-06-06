@@ -1,7 +1,11 @@
 package net.clownercraft.ferriswheel;
 
+import java.util.Arrays;
+import java.util.List;
+
 import net.md_5.bungee.api.ChatColor;
 
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -23,6 +27,9 @@ public class FerrisWheelCommand implements CommandExecutor {
 							p.sendMessage(ChatColor.GREEN + "Set center of Ferris Wheel to current location.");
 						}else if(args[0].equals("ride")){
 							Wheel.startRide(p);
+						}else if(args[0].equalsIgnoreCase("disable") || args[0].equalsIgnoreCase("enable")){
+							Wheel.setEnabled(args[0].equalsIgnoreCase("enable"));
+							p.sendMessage(ChatColor.GREEN + StringUtils.capitalize(args[0].toLowerCase()) + "d Ferris Wheel.");
 						}else{
 							p.sendMessage(ChatColor.RED + "Invalid arguments, used /fw for help.");
 						}
@@ -41,6 +48,14 @@ public class FerrisWheelCommand implements CommandExecutor {
 							} catch (NumberFormatException e){
 								p.sendMessage(ChatColor.RED + "Double/float expected, got string.");
 							}
+						}else if(args[0].equalsIgnoreCase("carts")){
+							
+							try {
+								
+							} catch(NumberFormatException e){
+								p.sendMessage(ChatColor.RED + "Invalid input, number expected.");
+							}
+							
 						}else if(args[0].equalsIgnoreCase("axis")){
 							boolean changed = Wheel.setAxis(args[1]);
 							if(changed){
@@ -62,7 +77,18 @@ public class FerrisWheelCommand implements CommandExecutor {
 						p.sendMessage(ChatColor.RED + "Invalid arguments, used /fw for help.");
 					}
 				}else{
-					
+					List<String> help = Arrays.asList(ChatColor.GRAY + "--- " + ChatColor.DARK_AQUA + "Ferris Wheel" + ChatColor.GRAY + " ---",
+							"/fw center" + ChatColor.GRAY + ": Set center of Ferris Wheel.",
+							"/fw radius <radius>" + ChatColor.GRAY + ": Set the radius of the Ferris Wheel.",
+							"/fw cost <tokens>" + ChatColor.GRAY + ": Set the token cost to ride the Ferris Wheel.",
+							"/fw speedModifier <modifier>" + ChatColor.GRAY + ": Set the speed modifier. 1 is none, 1.5 is 50% faster, etc.",
+							"/fw axis <X/Z>" + ChatColor.GRAY + ": Set the axis to rotate on. Must be X or Z.",
+							"/fw enable/disable" + ChatColor.GRAY + ": Disable or enable the rides moving.",
+							"/fw carts <amount>" + ChatColor.GRAY + ": Set the amount of carts/rides.",
+							"/fw ride" + ChatColor.GRAY + ": Ride the ferris wheel.");
+					for(String m : help){
+						p.sendMessage(m);
+					}
 				}
 			}else{
 				sender.sendMessage(ChatColor.RED + "Player-only command!");
