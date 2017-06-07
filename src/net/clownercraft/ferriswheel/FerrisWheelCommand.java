@@ -51,7 +51,9 @@ public class FerrisWheelCommand implements CommandExecutor {
 						}else if(args[0].equalsIgnoreCase("carts")){
 							
 							try {
-								
+								int amnt = Integer.valueOf(args[1]);
+								Wheel.setCarts(amnt);
+								p.sendMessage(ChatColor.GREEN + "Set carts amount to " + amnt + ".");
 							} catch(NumberFormatException e){
 								p.sendMessage(ChatColor.RED + "Invalid input, number expected.");
 							}

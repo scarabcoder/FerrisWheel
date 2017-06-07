@@ -67,12 +67,11 @@ public class Wheel {
 	
 	public static void startRide(Player p){
 		if(FerrisWheel.containsAll("radius", "speedModifier", "center", "cost", "axis")){
-			if(TokenManager.getInstance() != null && TokenManager.getInstance().getMoney(p.getUniqueId()) >= Wheel.getTokenCost() || p.hasPermission("ferriswheel.admin")){
+			if(isClass("net.clownercraft.tokenmanager.TokenManager") && TokenManager.getInstance().getMoney(p.getUniqueId()) >= Wheel.getTokenCost() || p.hasPermission("ferriswheel.admin")){
 				if(!p.hasPermission("ferriswheel.admin")){
 					TokenManager.getInstance().setMoney(p.getUniqueId(), TokenManager.getInstance().getMoney(p.getUniqueId()) - Wheel.getTokenCost());
 					p.sendMessage(ChatColor.RED + "-" + Wheel.getTokenCost() + " tokens.");
 				}
-				Animations.getAnimation("ferris").animate(1);
 				Location from = p.getLocation().clone();
 				double current = 3 * Math.PI / 2;
 				Location l = center.clone();
@@ -137,6 +136,15 @@ public class Wheel {
 			}
 		}
 		
+	}
+	
+	public static boolean isClass(String className) {
+	    try  {
+	        Class.forName(className);
+	        return true;
+	    }  catch (ClassNotFoundException e) {
+	        return false;
+	    }
 	}
 	
 	public static boolean isEnabled(){
@@ -209,6 +217,7 @@ public class Wheel {
 	public static void setEnabled(boolean enabled){
 		FerrisWheel.getPlugin().getConfig().set("enabled", enabled);
 		FerrisWheel.getPlugin().saveConfig();
+		Wheel.start();
 		Wheel.enabled = enabled;
 	}
 	
