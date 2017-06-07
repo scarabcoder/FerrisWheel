@@ -1,12 +1,15 @@
 package net.clownercraft.ferriswheel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 import net.clownercraft.tokenmanager.TokenManager;
 import net.md_5.bungee.api.ChatColor;
 import net.minecraft.server.v1_11_R1.EntityMinecartAbstract;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.craftbukkit.v1_11_R1.entity.CraftMinecart;
@@ -14,8 +17,6 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Minecart;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
-
-import com.clownercraft.animations.data.Animations;
 
 public class Wheel {
 	
@@ -28,7 +29,9 @@ public class Wheel {
 	private static FerrisWheelRunnable runnable;
 	private static boolean enabled;
 	
-	private static List<Minecart> carts = new ArrayList<Minecart>();
+	private static HashMap<Integer, UUID> carts = new HashMap<Integer, UUID>();
+	
+	private static List<Player> playerBuffer = new ArrayList<Player>();
 	
 	
 	public static void init(){
@@ -53,7 +56,7 @@ public class Wheel {
 	
 	public static void start(){
 		if(!FerrisWheel.containsAll("radius", "speedModifier", "center", "cost", "axis", "carts")) return;
-		
+		System.out.println("YES0");
 		runnable = new FerrisWheelRunnable();
 		
 		runnable.runTaskTimer(FerrisWheel.getPlugin(), 0, 1);
@@ -61,8 +64,24 @@ public class Wheel {
 
 	}
 	
+	public static boolean isInRange(double i1, double i2, double i3){
+		return i1 > i2 - i3 / 2 && i1 < i2 + i3 / 2;
+	}
+	
 	public static void stop(){
 		
+	}
+	
+	public static List<Player> getPlayerBuffer(){
+		return playerBuffer;
+	}
+	
+	public static void removeFromBuffer(Player p){
+		playerBuffer.remove(p);
+	}
+	
+	public static void addToBuffer(Player p){
+		playerBuffer.add(p);
 	}
 	
 	public static void startRide(Player p){
@@ -79,7 +98,7 @@ public class Wheel {
 				Minecart m = (Minecart) l.getWorld().spawnEntity(l, EntityType.MINECART);
 				m.setGravity(false);
 				m.setInvulnerable(true);
-				Wheel.carts.add(m);
+				//Wheel.carts.put(m);
 				m.addPassenger(p);
 				EntityMinecartAbstract cm = ((CraftMinecart) m).getHandle();
 				BukkitRunnable r = new BukkitRunnable(){
@@ -156,15 +175,38 @@ public class Wheel {
 	}
 	
 	public static boolean isVehicle(Minecart m){
-		return carts.contains(m);
+		for(Minecart cart : getCarts()){
+			if(cart.getUniqueId().equals(m.getUniqueId()));
+		}
+		return getCarts().contains(m);
 	}
 	
 	public static List<Minecart> getCarts(){
+		List<Minecart> carts = new ArrayList<Minecart>();
+		for(int key : Wheel.carts.keySet()){
+			carts.add((Minecart) Bukkit.getEntity(Wheel.carts.get(key)));
+		}
 		return carts;
 	}
 	
-	public static void addMinecart(Minecart cart){
-		carts.add(cart);
+	public static HashMap<Integer, UUID> getIDCarts(){
+		return carts;
+	}
+	
+	public static void addMinecarts(List<Minecart> carts){
+		int x = 0;
+		for(Minecart cart : carts){
+			Wheel.carts.put(x, cart.getUniqueId());
+			x++;
+		}
+	}
+	
+	public static Minecart getCart(int id){
+		return (Minecart) Bukkit.getEntity(carts.get(id));
+	}
+	
+	public static void addMinecart(int key, Minecart cart){
+		carts.put(key, cart.getUniqueId());
 	}
 	
 	public static void removeMinecart(Minecart cart){
