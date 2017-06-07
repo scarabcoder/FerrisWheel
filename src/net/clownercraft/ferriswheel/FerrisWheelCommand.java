@@ -30,6 +30,9 @@ public class FerrisWheelCommand implements CommandExecutor {
 						}else if(args[0].equalsIgnoreCase("disable") || args[0].equalsIgnoreCase("enable")){
 							Wheel.setEnabled(args[0].equalsIgnoreCase("enable"));
 							p.sendMessage(ChatColor.GREEN + StringUtils.capitalize(args[0].toLowerCase()) + "d Ferris Wheel.");
+						}else if(args[0].equalsIgnoreCase("leaveLoc")){
+							Wheel.setLeaveLocation(p.getLocation());
+							p.sendMessage(ChatColor.GREEN + "Set leave location.");
 						}else{
 							p.sendMessage(ChatColor.RED + "Invalid arguments, used /fw for help.");
 						}
@@ -87,6 +90,7 @@ public class FerrisWheelCommand implements CommandExecutor {
 							"/fw axis <X/Z>" + ChatColor.GRAY + ": Set the axis to rotate on. Must be X or Z.",
 							"/fw enable/disable" + ChatColor.GRAY + ": Disable or enable the rides moving.",
 							"/fw carts <amount>" + ChatColor.GRAY + ": Set the amount of carts/rides.",
+							"/fw leaveLoc" + ChatColor.GRAY + ": Set the dropoff leave location at end of ride.",
 							"/fw ride" + ChatColor.GRAY + ": Ride the ferris wheel.");
 					for(String m : help){
 						p.sendMessage(m);

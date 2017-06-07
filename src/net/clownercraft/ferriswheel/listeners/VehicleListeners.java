@@ -14,7 +14,7 @@ public class VehicleListeners implements Listener {
 	public void onLeaveVehicle(VehicleExitEvent e){
 		if(e.getVehicle() instanceof Minecart){
 			Minecart m = (Minecart) e.getVehicle();
-			if(Wheel.isVehicle(m)) e.setCancelled(true);
+			if(Wheel.isVehicle(m) && Wheel.isInBuffer(e.getExited())) e.setCancelled(true);
 		}
 	}
 	

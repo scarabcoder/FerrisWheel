@@ -7,16 +7,13 @@ import java.util.UUID;
 
 import net.clownercraft.tokenmanager.TokenManager;
 import net.md_5.bungee.api.ChatColor;
-import net.minecraft.server.v1_11_R1.EntityMinecartAbstract;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.craftbukkit.v1_11_R1.entity.CraftMinecart;
-import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Minecart;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 public class Wheel {
 	
@@ -28,10 +25,11 @@ public class Wheel {
 	private static int cartsAmount;
 	private static FerrisWheelRunnable runnable;
 	private static boolean enabled;
+	private static Location leaveLocation;
 	
 	private static HashMap<Integer, UUID> carts = new HashMap<Integer, UUID>();
 	
-	private static List<Player> playerBuffer = new ArrayList<Player>();
+	private static List<UUID> playerBuffer = new ArrayList<UUID>();
 	
 	
 	public static void init(){
@@ -48,15 +46,19 @@ public class Wheel {
 			cost = f.getInt("cost");
 		if(f.contains("enabled"))
 			enabled = f.getBoolean("enabled");
+		if(f.contains("leaveLoc"))
+			leaveLocation = (Location) f.get("leaveLoc");
 		if(f.contains("axis"))
 			axis = f.getString("axis");
-		if(!FerrisWheel.containsAll("radius", "speedModifier", "center", "cost", "axis", "carts"))
-			System.out.println("[Ferris Wheel] One or more of the following settings have not been set: \nradius, speedModifier, center, cost, axis, carts.");
+		if(!FerrisWheel.containsAll("radius", "speedModifier", "center", "cost", "axis", "carts", "leaveLoc"))
+			System.out.println("[Ferris Wheel] One or more of the following settings have not been set: \nradius, speedModifier, center, cost, axis, carts, leaveLocation.");
+		if(enabled){
+			start();
+		}
 	}
 	
 	public static void start(){
-		if(!FerrisWheel.containsAll("radius", "speedModifier", "center", "cost", "axis", "carts")) return;
-		System.out.println("YES0");
+		if(!FerrisWheel.containsAll("radius", "speedModifier", "center", "cost", "axis", "carts", "leaveLoc")) return;
 		runnable = new FerrisWheelRunnable();
 		
 		runnable.runTaskTimer(FerrisWheel.getPlugin(), 0, 1);
@@ -69,19 +71,35 @@ public class Wheel {
 	}
 	
 	public static void stop(){
-		
+		runnable.cancel();
+		for(Minecart m : Wheel.getCarts()){
+			m.remove();
+		}
+		carts.clear();
 	}
 	
 	public static List<Player> getPlayerBuffer(){
-		return playerBuffer;
+		List<Player> players = new ArrayList<Player>();
+		for(UUID u : playerBuffer){
+			players.add(Bukkit.getPlayer(u));
+		}
+		return players;
 	}
 	
 	public static void removeFromBuffer(Player p){
-		playerBuffer.remove(p);
+		playerBuffer.remove(p.getUniqueId());
+	}
+	
+	public static boolean isInBuffer(Entity e){
+		return playerBuffer.contains(e.getUniqueId());
+	}
+	
+	public static void removeFromBuffer(UUID id){
+		playerBuffer.remove(id);
 	}
 	
 	public static void addToBuffer(Player p){
-		playerBuffer.add(p);
+		playerBuffer.add(p.getUniqueId());
 	}
 	
 	public static void startRide(Player p){
@@ -91,60 +109,8 @@ public class Wheel {
 					TokenManager.getInstance().setMoney(p.getUniqueId(), TokenManager.getInstance().getMoney(p.getUniqueId()) - Wheel.getTokenCost());
 					p.sendMessage(ChatColor.RED + "-" + Wheel.getTokenCost() + " tokens.");
 				}
-				Location from = p.getLocation().clone();
-				double current = 3 * Math.PI / 2;
-				Location l = center.clone();
-				l.setY(l.getY() + getRadius()*Math.sin(current));
-				Minecart m = (Minecart) l.getWorld().spawnEntity(l, EntityType.MINECART);
-				m.setGravity(false);
-				m.setInvulnerable(true);
-				//Wheel.carts.put(m);
-				m.addPassenger(p);
-				EntityMinecartAbstract cm = ((CraftMinecart) m).getHandle();
-				BukkitRunnable r = new BukkitRunnable(){
-	
-					double curr = 3 *Math.PI / 2;
-					
-					
-					@Override
-					public void run() {
-	
-						Location l = center.clone();
-						
-						
-						double theta = 0;  // angle that will be increased each loop
-						double h = (getAxis().equalsIgnoreCase("X") ? l.getX() : l.getZ());      // x/z coordinate of circle center
-						double k = l.getY();      // y coordinate of circle center
-						double step = ((double)radius) / 200 * speedModifier;  // amount to add to theta each time (degrees)
-						//System.out.println(step);
-						int ra = radius;
-						while(theta < 360){
-							Location l2 = m.getLocation();
-							
-							double x = (h + ra*Math.cos(theta));
-							double z = (k + ra*Math.sin(theta));
-							if(getAxis().equalsIgnoreCase("X")) l.setX(x); else l.setZ(x);;
-							l.setY(z);
-							if(theta > curr){
-								//l.getWorld().spawnParticle(Particle.REDSTONE, l, 25);
-								l2.setDirection(l.toVector().subtract(l2.toVector()));
-								cm.setPosition(l.getX(), l.getY(), l.getZ());
-								//m.setVelocity(l2.getDirection().multiply(l.distance(l2) * 2.5));
-								break;
-							}
-							theta += step;
-						}
-						//System.out.println(curr);
-						curr += step;
-						if(curr > 11){
-							m.remove();
-							p.teleport(from);
-							this.cancel();
-						}
-						
-					}
-				};
-				r.runTaskTimer(FerrisWheel.getPlugin(), 0, 1);
+				p.sendMessage(ChatColor.GREEN + "Ride queued, please wait for Wheel to come around.");
+				addToBuffer(p);
 			}else{
 				p.sendMessage(ChatColor.RED + "This ride requires " + Wheel.getTokenCost() + " tokens!");
 			}
@@ -205,6 +171,10 @@ public class Wheel {
 		return (Minecart) Bukkit.getEntity(carts.get(id));
 	}
 	
+	public static Location getLeaveLocation(){
+		return leaveLocation;
+	}
+	
 	public static void addMinecart(int key, Minecart cart){
 		carts.put(key, cart.getUniqueId());
 	}
@@ -259,8 +229,17 @@ public class Wheel {
 	public static void setEnabled(boolean enabled){
 		FerrisWheel.getPlugin().getConfig().set("enabled", enabled);
 		FerrisWheel.getPlugin().saveConfig();
-		Wheel.start();
+		if(enabled)
+			Wheel.start();
+		else
+			Wheel.stop();
 		Wheel.enabled = enabled;
+	}
+	
+	public static void setLeaveLocation(Location l){
+		FerrisWheel.getPlugin().getConfig().set("leaveLoc", l);
+		FerrisWheel.getPlugin().saveConfig();
+		leaveLocation = l;
 	}
 	
 	public static void setCenter(Location center){
